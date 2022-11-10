@@ -1,4 +1,4 @@
-Package: rit
+Package: rit-esg
 Title: Retirement Income Toolkit
 Version: 0.1
 Authors@R: person(given = "School of Risk & Actuarial", family = "UNSW",
