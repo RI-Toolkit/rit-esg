@@ -1,33 +1,153 @@
 #' esg_var_simulator
 #'
-#' Returns the simulated paths for various economic and financial variables:
-#' (1) Australia 3-month zero-coupon yields, (2) Australia 10-year zero-coupon
-#' spread, (3) New South Wales houses value index, (4) New South Wales houses
-#' rental yields, (5) Australian GDP, (6) Australian CPI, (7) S&P/ASX200 closing
-#' price, (8) Australian dollar trade-weighted index, (9) Australia mortgage
-#' rate, (10) New South Wales unemployment rate.
-#' Simulations are based on a Vector Autoregression model. This function uses
-#' the package `zoo` to convert the frequnency units. Period-by-period summary statistics can be obtained from \code{esg_summary}.
+#' @description
+#' The discrete-time economic scenario generator simulates the trajectories of
+#' 11 Australian economic and financial variables (in brackets are the `$names`
+#' of the output dataframes):
 #'
-#' @param num_years Number of years to forecast, counting from 2021-01-01.
-#' Default is 5 years, recommended period is less than 10 years.
-#' @param num_paths Number of simulation paths. Default is 10 paths.
-#' @param frequency One of "year", "quarter", and "month". Default is "quarter",
-#' which is the simulation frequency for the Vector Autoregression model. Linear
-#' interpolation will be used if the required frequency is higher, whereas
-#' arithmetic average will be used if the frequency is lower.
-#' @param perc_change If the outputs are expressed in terms of period-by-period percentage
-#' change.Default is FALSE. The reference level, i.e., the original values in the first output period, will be appended above the percentage changes for each variable and each trajectory.
-#' @param return_sdf If the VAR-based stochastic discount factors are returned.
-#' Default is TRUE.
-#' @param seed Specify the seed for simulations. Default is NULL.
+#' (1) 3-month zero-coupon bond yields (`$zcp3m_yield`),
 #'
-#' @return A list containing 10 data frames for the simulated trajectories for
-#' each economic variable, and a list of white noises in the VAR model.
+#' (2) 10-year zero-coupon bond spread (`$zcp10y_spread`),
+#'
+#' (3) NSW home value index (`$home_index`),
+#'
+#' (4) NSW home rental yields (`$rental_yield`),
+#'
+#' (5) Australia GDP (`$GDP`),
+#'
+#' (6) Australia CPI (`$CPI`),
+#'
+#' (7) S&P/ASX200 closing price (`$ASX200`),
+#'
+#' (8) Australian dollar trade-weighted index (`$AUD`),
+#'
+#' (9) Australia mortgage rate (`$mortgage_rate`),
+#'
+#' (10) NSW unemployment rate (`$unemployment_rate`),
+#'
+#' (11) Stochastic discount factors (`$discount_factors`).
+#'
+#' Simulations are based on a Vector Autoregression model, refer to section
+#' `details` for explanations of the mathematical model. This function uses
+#' the package `zoo` to convert the frequnency units. Period-by-period summary
+#' statistics can be obtained from \code{esg_summary}.
+#'
+#' @details
+#' Factors (1)-(8) (in rates) were fitted using a Vector Autoregressive model
+#' (VAR), factors (9)-(10) were respectively expressed as a fixed margin over
+#' factors (1)-(2) due to strong correlations, while factor (11) is derived
+#' from the fitted VAR model with arbitrage-free assumptions. Further details
+#' on model parameter estimation and forecasts can be found in note (a) below.
+#'
+#' Vector Autoregression (VAR) is a regression of a time series where the ouput
+#' depends linearly on the past values of itself, and the past values of other
+#' variables, up to some specfied order:
+#'
+#' \deqn{\mathbf{z}_t = \mathbf{\mu} + \Phi_1 \mathbf{z}_{t-1} + \Phi_2 \mathbf{z}_{t-2} + \cdots + \Phi_p \mathbf{z}_{t-p} + \mathbf{\epsilon},}
+#'
+#' where
+#'
+#' * \eqn{\mathbf{z}_{t}} is the vector of economic variables,
+#'
+#' * \eqn{\mathbf{\mu}} is the vector of intercepts,
+#'
+#' * \eqn{\Phi_{i}, i=1,\cdots,p} are coefficient matrices of size \eqn{n \times n}
+#' with \eqn{n} being the number of economic variables and \eqn{p} the lags.
+#'
+#' * \eqn{\mathbf{\epsilon}} is a vector of white noises.
+#'
+#' The stochastic discount factor is defined as:
+#'
+#' \deqn{\mathbf{s}_{t+1} = \exp(-\mathbf{e}_1^\top \mathbf{z}_t - \frac{1}{2} \lambda_t^\top \lambda_t - \lambda_t^\top \mathbf{\epsilon}_{t+1}),}
+#'
+#' where \eqn{\mathbf{e}_1^\top \mathbf{z}_t} and \eqn{\mathbf{\epsilon}_t}
+#' respectively denote the 3-month zero-coupon bond rates and white noises from
+#' the fitted VAR model, and \eqn{\mathbf{\lambda}_t} is the market price of
+#' risk process which is assumed to be affine over factors (1)-(8).
+#'
+#'**Notes:**
+#'
+#'(a) Procedure for parameter estimation:
+#'
+#'* Transformed factors (3),(5)-(8) to continuously compounded growth rates,
+#'tested for correlation, causality, and stationarity.
+#'
+#'* Found the optimal lag order for Vector Autoregression using AIC, SIC, HQC.
+#'
+#'* Fitted the VAR model using ordinary least squares. This was followed by
+#'evaluation.
+#'
+#'* Associated the stochastic discount factors with VAR factors and nominal bond
+#'prices, estimated the market price of risk parameters by minimising the sum
+#'of squared error.
+#'
+#'     Procedure for forecasts: Generated factors (1)-(8) using Vector
+#' Autoregression formula. From the generated paths and noises, derived
+#' stochastic discount factors.
+#'
+#'     Detailed R codes for parameter estimation can be found in the economic tutorial/economic.
+#'
+#' (b) Large values of percentage change can appear if the original forecasts
+#' are near-zero, or if the Gaussian noise is large, though with low probabilities.
+#' This happens especially for interest rates in the first few periods due to
+#' historical-low rates in 2021.
+#'
+#'(c) Negative values for rate factors i.e., factors (1)(2)(4)(9)(10), are
+#'theoretically allowed as Vector Autoregression models assume that the noise
+#'follow a Gaussian distribution. Index factors, i.e., factors (3)(5)-(8), on
+#'the other hand, are all positive.
+#'
+#'(d) Choosing between discrete- and continuous-time models:
+#'
+#'* The outputs are different for the two simulators, users should choose the
+#'model based on their objectives.
+#'
+#'* The base time step for discrete-time model is one quarter, whereas there is
+#'no such as a base for continuous-time. For time steps smaller than one quarter,
+#'discrete-time model will interpolate the quarterly statistics, whereas the
+#'continuous-time model simply generates random noises for each specific time
+#'step. Consequently, for large time steps, the executing time for continuous-time
+#'models are shorter than the dicrete-time model.
+#'
+#' @references
+#'
+#'Daniel H Alai, Hua Chen, Daniel Cho, Katja Hanewald, and Michael Sherris. Developing equity release markets: Risk analysis for reverse mortgages and home reversions. _North American Actuarial Journal_, 18(1):217–241, 2014.
+#'
+#'Andrew Ang and Monika Piazzesi. A no-arbitrage vector autoregression of term structure dynamics with macroeconomic and latent variables. _Journal of Monetary economics_, 50(4):745–787, 2003.
+#'
+#'Andrew Ang, Monika Piazzesi, and Min Wei. What does the yield curve tell us about gdp growth? _Journal of econometrics_, 131(1-2):359–403, 2006.
+#'
+#' @param num_years integer denoting number of years to forecast from 01-01-2021,
+#' default 5 years
+#' @param num_paths integer denoting number of simulations to make for each variable,
+#' default 10 paths'year', 'quarter' or 'month' denoting the simulation
+#' frequency, default 'quarter'. The base simulation time step is one quarter,
+#' linear interpolation will be used if the required frequency is higher,
+#' whereas arithmetic average will be used if the frequency is lower.
+#' @param perc_change set TRUE for outputs to be expressed as period-by-period
+#' percent change, default FALSE. The reference level, i.e., the original values
+#' in the first output period, will be appended above the percentage changes for
+#' each variable and each trajectory. See note (b) in section `details`.
+#' @param return_sdf set TRUE to return the stochastic discount factors,
+#' default TRUE
+#' @param seed Specify the seed for simulations, no default
+#'
+#' @return A list of 10 dataframes containing simulated trajectories from
+#' 01-01-2021 of the 10 variables, or a list of 11 dataframes including the
+#' simulated stochastic discount factors if `return_sdf` is set TRUE. Rows are
+#' the trajectories (e.g., `trajectory_1`), columns are the time steps (e.g.,
+#' `2021-01-01`). See note (c) for explanations on the negativity of output values.
 #' @export esg_var_simulator
 #'
-#' @examples sim = esg_var_simulator(num_years = 10, num_paths = 10,
-#' frequency = "year", perc_change = FALSE, return_sdf = TRUE, seed = 2022)
+#' @examples # simulate 10 years of data
+#'
+#' sim <- esg_var_simulator(num_years = 10, num_paths = 10, frequency = 'year')
+#'
+#' # suppose we wish to look at the 3 months zero coupon bonds
+#' sim$zcp3m_yield
+#'
+#' # if we wanted a specific trajectory, say 3
+#' sim$zcp3m_yield[3,]
 esg_var_simulator = function (num_years = 5, num_paths = 10, frequency = "quarter", perc_change = FALSE, return_sdf = TRUE, seed = NULL) {
 
     ################

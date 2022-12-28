@@ -7,7 +7,7 @@
 #'
 #'
 #' @param paths List or dataframe containing time series data.
-#' @param probs Numeric vector of probabilities with values in [0,1].
+#' @param probs Numeric vector of probabilities with values between 0 and 1.
 #' Default is 0%, 25%, 50%, 75%, 100%-tiles.
 #' @param na.rm logical. set TRUE if any NA and NaN's are removed from data
 #' before computing the statistics. Default TRUE
