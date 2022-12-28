@@ -103,9 +103,7 @@
 #' * Applied Kalman filtering to estimate the parameters. The maximum likelihood
 #' estimators were obtained from the Nelder-Mead algorithm.
 #'
-#'     Procedure for forecasts: Used the state transition equation:
-#'
-#' \deqn{X_{t+\Delta t} = \int_0^{\Delta t} \exp(-K s) ds \theta + \exp(-K\Delta t) X_t + \eta_t,\ \eta_t \sim \mathcal{N} (0,Q),\\ Q = \int_0^{\Delta t} \exp(-K s) \Sigma \Sigma^\top \exp(-K^\top s) ds.}
+#'     Procedure for forecasts: Used the state transition equation: \deqn{X_{t+\Delta t} = \int_0^{\Delta t} \exp(-K s) ds \theta + \exp(-K\Delta t) X_t + \eta_t,\ \eta_t \sim \mathcal{N} (0,Q),\\ Q = \int_0^{\Delta t} \exp(-K s) \Sigma \Sigma^\top \exp(-K^\top s) ds.}
 #'
 #'     Detailed R codes for parameter estimation can be found in the economic tutorial/economic.
 #'
