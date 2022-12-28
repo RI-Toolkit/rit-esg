@@ -1,22 +1,36 @@
 #' esg_summary
 #'
-#' Provides period-by-period summary statistics including quantiles, mean, 
-#' and standard deviation for time series data.
+#' Period-by-period summary statistics such as quantiles, mean, and standard
+#' deviation are helpful in understanding the distribution of the simulated
+#' trajectories. We provide a R function which accepts a list or a dataframe of
+#' time series data, and returns various common choices of summary statistics.
 #'
 #'
 #' @param paths List or dataframe containing time series data.
-#' @param probs Numeric vector of probabilities with values in [0,1]. 
+#' @param probs Numeric vector of probabilities with values in [0,1].
 #' Default is 0%, 25%, 50%, 75%, 100%-tiles.
-#' @param na.rm logical, if true, any NA and NaN's are removed from data before 
-#' computing the statistics. Default TRUE.
+#' @param na.rm logical. set TRUE if any NA and NaN's are removed from data
+#' before computing the statistics. Default TRUE
 #'
-#' @return List of dataframe containing summary statistics for each period 
+#' @return List of dataframe containing summary statistics for each period
 #' across trajectories.
 #' @export
-#' 
-#' @examples sim = esg_afns_simulator(num_years = 10, num_paths = 10, 
-#' frequency = "year", type = "correlated", model = "interest_rate") 
-#' series_summ = esg_summary (paths = sim, probs = seq(0,1,0.2), na.rm = TRUE)
+#'
+#' @examples # simulate 10 years of data
+#' sim <- esg_var_simulator(num_years = 10, num_paths = 10, frequency = 'year')
+#'
+#' # obtain summary statistics for GDP data with default statistics
+#' gdp_summ <- esg_summary(sim$GDP)
+#'
+#' # obtain summary statistics for 0%,20%,40%,60%,80%,100%-tiles for the whole list
+#' all_summ <- esg_summary(sim, probs = seq(0,1,0.2))
+#'
+#' # summary statistics for self-defined dataframes
+#' test_data = as.data.frame(matrix(1:100, nrow = 4, byrow = TRUE))
+#' test_data2 = as.data.frame(matrix(1001:2000, nrow = 40, byrow = TRUE))
+#' test_list = list(test_data, test_data2)
+#' esg_summary(test_list)
+#'
 esg_summary = function (paths, probs = seq(0, 1, 0.25), na.rm = TRUE) {
 
     ##################
